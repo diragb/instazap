@@ -1,0 +1,49 @@
+{
+  "name": "instazap",
+  "version": "0.1.0",
+  "description": "A straightforward bot to forward Instagram messages directly to your Slack organization.",
+  "main": "build/index.js",
+  "scripts": {
+    "dev": "npx nodemon",
+    "build": "rimraf ./build && tsc",
+    "start": "npm run build && node build/index.js"
+  },
+  "keywords": [
+    "instagram",
+    "slack",
+    "zapier",
+    "bot",
+    "messaging"
+  ],
+  "author": "Dirag Biswas (https://github.com/diragb)",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/diragb"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diragb/instazap"
+  },
+  "bugs": {
+    "url": "https://github.com/diragb/instazap/issues"
+  },
+  "homepage": "https://github.com/diragb/instazap#readme",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/lodash": "^4.14.196",
+    "@types/node": "^20.4.5",
+    "nodemon": "^3.0.1",
+    "rimraf": "^5.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.13.2",
+    "axios": "^1.4.0",
+    "bluebird": "^3.7.2",
+    "dotenv": "^16.3.1",
+    "instagram-private-api": "^1.45.3",
+    "instagram_mqtt": "^1.2.2",
+    "lodash": "^4.17.21"
+  }
+}
