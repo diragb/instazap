@@ -1,6 +1,6 @@
 {
   "name": "instazap",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A straightforward bot to forward Instagram messages directly to your Slack organization.",
   "main": "build/index.js",
   "scripts": {
@@ -41,7 +41,6 @@
     "@slack/bolt": "^3.13.2",
     "axios": "^1.4.0",
     "bluebird": "^3.7.2",
-    "dotenv": "^16.3.1",
     "instagram-private-api": "^1.45.3",
     "instagram_mqtt": "^1.2.2",
     "lodash": "^4.17.21"

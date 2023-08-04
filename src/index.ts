@@ -1,5 +1,4 @@
 // Packages:
-import 'dotenv/config'
 import { IgApiClient } from 'instagram-private-api'
 import { withRealtime } from 'instagram_mqtt'
 import { App } from '@slack/bolt'

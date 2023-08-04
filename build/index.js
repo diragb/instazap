@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // Packages:
-require("dotenv/config");
 const instagram_private_api_1 = require("instagram-private-api");
 const instagram_mqtt_1 = require("instagram_mqtt");
 const bolt_1 = require("@slack/bolt");

@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { InstaZapOptions } from './types';
 declare const InstaZap: (options: InstaZapOptions) => Promise<void>;
 export default InstaZap;
