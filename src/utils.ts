@@ -139,7 +139,7 @@ export const handlePostVideo = (media: any, options?: InstaZapOptions): {
   type: MESSAGE_TYPE.POST_VIDEO,
   body: {
     thumbnailURL: getLargestCandidate(media.video_versions, options).url as string,
-    title: media.user.username,
+    title: media.user?.username ?? 'username',
     videoURL: getLargestCandidate(media.video_versions, options).url as string
   }
 })
@@ -167,7 +167,7 @@ export const handleMediaShare = async (
             body.push({
               body: {
                 thumbnailURL: getLargestCandidate(media_share.carousel_media[i].image_versions2.candidates, options).url as string,
-                title: media_share.user.username,
+                title: media_share.user?.username ?? 'username',
                 videoURL: getLargestCandidate(media_share.video_versions, options).url as string
               },
               mediaType: MESSAGE_TYPE.VIDEO
@@ -220,7 +220,7 @@ export const handleStoryShare = async (
     type: MESSAGE_TYPE.STORY_VIDEO,
     body: {
       thumbnailURL: getLargestCandidate(media.image_versions2.candidates, options).url,
-      title: media.user.username,
+      title: media.user?.username ?? 'username',
       videoURL: getLargestCandidate(media.video_versions, options).url as string
     }
   }
@@ -256,7 +256,7 @@ export const getStructuredMessage = async (
           type: MESSAGE_TYPE.REEL,
           body: {
             thumbnailURL: getLargestCandidate(media.image_versions2.candidates, options).url as string,
-            title: media.user.username,
+            title: media.user?.username ?? 'username',
             videoURL: getLargestCandidate(media.video_versions, options).url as string,
           }
         }

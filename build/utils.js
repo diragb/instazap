@@ -112,14 +112,17 @@ const getLargestCandidate = (candidates, options) => {
     return candidates[0];
 };
 exports.getLargestCandidate = getLargestCandidate;
-const handlePostVideo = (media, options) => ({
-    type: types_1.MESSAGE_TYPE.POST_VIDEO,
-    body: {
-        thumbnailURL: (0, exports.getLargestCandidate)(media.video_versions, options).url,
-        title: media.user.username,
-        videoURL: (0, exports.getLargestCandidate)(media.video_versions, options).url
-    }
-});
+const handlePostVideo = (media, options) => {
+    var _a, _b;
+    return ({
+        type: types_1.MESSAGE_TYPE.POST_VIDEO,
+        body: {
+            thumbnailURL: (0, exports.getLargestCandidate)(media.video_versions, options).url,
+            title: (_b = (_a = media.user) === null || _a === void 0 ? void 0 : _a.username) !== null && _b !== void 0 ? _b : 'username',
+            videoURL: (0, exports.getLargestCandidate)(media.video_versions, options).url
+        }
+    });
+};
 exports.handlePostVideo = handlePostVideo;
 const handleMediaShare = (ig, message, options) => __awaiter(void 0, void 0, void 0, function* () {
     var _d, _e, _f, _g;
@@ -136,12 +139,13 @@ const handleMediaShare = (ig, message, options) => __awaiter(void 0, void 0, voi
                 const carouselLength = (_f = media_share.carousel_media_count) !== null && _f !== void 0 ? _f : (_g = media_share.carousel_media) === null || _g === void 0 ? void 0 : _g.length;
                 const body = [];
                 Array.from(Array(carouselLength)).forEach((_, i) => {
+                    var _a, _b;
                     const isVideo = media_share.carousel_media[i].media_type === 2;
                     if (isVideo) {
                         body.push({
                             body: {
                                 thumbnailURL: (0, exports.getLargestCandidate)(media_share.carousel_media[i].image_versions2.candidates, options).url,
-                                title: media_share.user.username,
+                                title: (_b = (_a = media_share.user) === null || _a === void 0 ? void 0 : _a.username) !== null && _b !== void 0 ? _b : 'username',
                                 videoURL: (0, exports.getLargestCandidate)(media_share.video_versions, options).url
                             },
                             mediaType: types_1.MESSAGE_TYPE.VIDEO
@@ -193,6 +197,7 @@ const handleMediaShare = (ig, message, options) => __awaiter(void 0, void 0, voi
 });
 exports.handleMediaShare = handleMediaShare;
 const handleStoryShare = (message, options) => __awaiter(void 0, void 0, void 0, function* () {
+    var _h, _j;
     const media = message.story_share.media;
     const isVideo = media.media_type === 2;
     if (isVideo)
@@ -200,7 +205,7 @@ const handleStoryShare = (message, options) => __awaiter(void 0, void 0, void 0,
             type: types_1.MESSAGE_TYPE.STORY_VIDEO,
             body: {
                 thumbnailURL: (0, exports.getLargestCandidate)(media.image_versions2.candidates, options).url,
-                title: media.user.username,
+                title: (_j = (_h = media.user) === null || _h === void 0 ? void 0 : _h.username) !== null && _j !== void 0 ? _j : 'username',
                 videoURL: (0, exports.getLargestCandidate)(media.video_versions, options).url
             }
         };
@@ -212,7 +217,7 @@ const handleStoryShare = (message, options) => __awaiter(void 0, void 0, void 0,
 });
 exports.handleStoryShare = handleStoryShare;
 const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h, _j;
+    var _k, _l, _m, _o;
     if (message.processed_business_suggestion)
         return {
             type: types_1.MESSAGE_TYPE.TEXT,
@@ -221,7 +226,7 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
     if (message.item_type === 'text')
         return {
             type: types_1.MESSAGE_TYPE.TEXT,
-            body: (_h = message.text) !== null && _h !== void 0 ? _h : ''
+            body: (_k = message.text) !== null && _k !== void 0 ? _k : ''
         };
     if (message.item_type === 'placeholder') {
         if (message.placeholder.message === 'Use the latest version of the Instagram app to see this reel.') {
@@ -231,12 +236,12 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
                     headers: yield (0, exports.getInstagramHeaders)(ig),
                     method: 'GET'
                 });
-                const media = (_j = response.data.items) === null || _j === void 0 ? void 0 : _j[0].clip.clip;
+                const media = (_l = response.data.items) === null || _l === void 0 ? void 0 : _l[0].clip.clip;
                 return {
                     type: types_1.MESSAGE_TYPE.REEL,
                     body: {
                         thumbnailURL: (0, exports.getLargestCandidate)(media.image_versions2.candidates, options).url,
-                        title: media.user.username,
+                        title: (_o = (_m = media.user) === null || _m === void 0 ? void 0 : _m.username) !== null && _o !== void 0 ? _o : 'username',
                         videoURL: (0, exports.getLargestCandidate)(media.video_versions, options).url,
                     }
                 };
@@ -288,31 +293,31 @@ const isVideo = (type) => [
 ].includes(type);
 exports.isVideo = isVideo;
 const uploadPhoto = (slack, URL, channel, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _k, _l, _m, _o, _p;
+    var _p, _q, _r, _s, _t;
     yield slack.client.files.uploadV2({
         token: options.slack.credentials.OAUTH_TOKEN,
         channel_id: channel,
         file: stream_1.Readable.from((yield axios_1.default.get(URL, {
             responseType: 'stream'
         })).data),
-        filename: (_p = (_o = (_m = (_l = (_k = URL.split('/')) === null || _k === void 0 ? void 0 : _k.slice(-1)) === null || _l === void 0 ? void 0 : _l[0]) === null || _m === void 0 ? void 0 : _m.split('?')) === null || _o === void 0 ? void 0 : _o[0]) !== null && _p !== void 0 ? _p : 'photo.jpg'
+        filename: (_t = (_s = (_r = (_q = (_p = URL.split('/')) === null || _p === void 0 ? void 0 : _p.slice(-1)) === null || _q === void 0 ? void 0 : _q[0]) === null || _r === void 0 ? void 0 : _r.split('?')) === null || _s === void 0 ? void 0 : _s[0]) !== null && _t !== void 0 ? _t : 'photo.jpg'
     });
 });
 exports.uploadPhoto = uploadPhoto;
 const uploadVideo = (slack, URL, channel, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _q, _r, _s, _t, _u;
+    var _u, _v, _w, _x, _y;
     yield slack.client.files.uploadV2({
         token: options.slack.credentials.OAUTH_TOKEN,
         channel_id: channel,
         file: stream_1.Readable.from((yield axios_1.default.get(URL, {
             responseType: 'stream'
         })).data),
-        filename: (_u = (_t = (_s = (_r = (_q = URL.split('/')) === null || _q === void 0 ? void 0 : _q.slice(-1)) === null || _r === void 0 ? void 0 : _r[0]) === null || _s === void 0 ? void 0 : _s.split('?')) === null || _t === void 0 ? void 0 : _t[0]) !== null && _u !== void 0 ? _u : 'video.mp4',
+        filename: (_y = (_x = (_w = (_v = (_u = URL.split('/')) === null || _u === void 0 ? void 0 : _u.slice(-1)) === null || _v === void 0 ? void 0 : _v[0]) === null || _w === void 0 ? void 0 : _w.split('?')) === null || _x === void 0 ? void 0 : _x[0]) !== null && _y !== void 0 ? _y : 'video.mp4',
     });
 });
 exports.uploadVideo = uploadVideo;
 const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _v, e_1, _w, _x;
+    var _z, e_1, _0, _1;
     const structuredMessage = yield (0, exports.getStructuredMessage)(ig, message, options);
     if (options.enableLogging)
         console.log('⚡ Received Instagram message: ', structuredMessage);
@@ -323,10 +328,10 @@ const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, voi
     if (messageHasMultipleNonTextMedia) {
         try {
             try {
-                for (var _y = true, _z = __asyncValues(structuredMessage.body), _0; _0 = yield _z.next(), _v = _0.done, !_v; _y = true) {
-                    _x = _0.value;
-                    _y = false;
-                    const item = _x;
+                for (var _2 = true, _3 = __asyncValues(structuredMessage.body), _4; _4 = yield _3.next(), _z = _4.done, !_z; _2 = true) {
+                    _1 = _4.value;
+                    _2 = false;
+                    const item = _1;
                     if (item.mediaType === types_1.MESSAGE_TYPE.PHOTO) {
                         yield (0, exports.uploadPhoto)(slack, item.body, channel, options);
                     }
@@ -338,7 +343,7 @@ const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, voi
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (!_y && !_v && (_w = _z.return)) yield _w.call(_z);
+                    if (!_2 && !_z && (_0 = _3.return)) yield _0.call(_3);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
