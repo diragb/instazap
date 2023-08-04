@@ -98,10 +98,11 @@ const login = (ig, username, password) => __awaiter(void 0, void 0, void 0, func
 });
 exports.login = login;
 const getInstagramHeaders = (ig) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
     const response = yield axios_1.default.get('https://www.instagram.com/apple/');
     const html = response.data;
-    const CSRFToken = html.split('csrf_token')[1].split('\\"')[2];
-    const IGAppID = html.split('X-IG-App-ID')[1].split(',')[0].replaceAll('"', '').replace(':', '');
+    const CSRFToken = (_a = html === null || html === void 0 ? void 0 : html.split('csrf_token')[1]) === null || _a === void 0 ? void 0 : _a.split('\\"')[2];
+    const IGAppID = (_c = (_b = html === null || html === void 0 ? void 0 : html.split('X-IG-App-ID')[1]) === null || _b === void 0 ? void 0 : _b.split(',')[0]) === null || _c === void 0 ? void 0 : _c.replaceAll('"', '').replace(':', '');
     return Object.assign(Object.assign({}, response.headers), { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) 20100101 Firefox/103.0', 'Accept': '*/*', 'Accept-Language': 'en,en-US;q=0.3', 'X-Csrftoken': CSRFToken, 'X-IG-App-ID': IGAppID, 'X-ASBD-ID': '198337', 'X-IG-WWW-Claim': 'hmac.AR2vqJv-rMUJZ0y3MD6rTCGpFTZHRY8OD0gGoEPuHcCI9jtN', 'Origin': 'https://www.instagram.com', 'DNT': '1', 'Alt-Used': 'i.instagram.com', 'Connection': 'keep-alive', 'Referer': 'https://www.instagram.com/', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="102"', 'sec-ch-ua-mobile': '?0', 'sec-ch-ua-platform': '"Linux"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-site', 'Sec-GPC': '1', 'Cookie': ig.state.cookieJar.getCookieString('https://www.instagram.com') });
 });
 exports.getInstagramHeaders = getInstagramHeaders;
@@ -121,18 +122,18 @@ const handlePostVideo = (media, options) => ({
 });
 exports.handlePostVideo = handlePostVideo;
 const handleMediaShare = (ig, message, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _d, _e, _f, _g;
     try {
         const response = yield axios_1.default
             .get(`https://www.instagram.com/api/v1/direct_v2/threads/${message.thread_id}/get_items/?item_ids=%5B%22${message.item_id}%22%5D&original_message_client_contexts=%5B%22${message.client_context}%22%5D`, {
             headers: yield (0, exports.getInstagramHeaders)(ig),
             method: 'GET'
         });
-        const media_share = (_a = response.data.items) === null || _a === void 0 ? void 0 : _a[0].media_share;
-        const isCarousel = media_share.carousel_media_count > 0 || ((_b = media_share.carousel_media) === null || _b === void 0 ? void 0 : _b.length) > 1;
+        const media_share = (_d = response.data.items) === null || _d === void 0 ? void 0 : _d[0].media_share;
+        const isCarousel = media_share.carousel_media_count > 0 || ((_e = media_share.carousel_media) === null || _e === void 0 ? void 0 : _e.length) > 1;
         if (isCarousel) {
             if (options === null || options === void 0 ? void 0 : options.getAllItemsFromCarousel) {
-                const carouselLength = (_c = media_share.carousel_media_count) !== null && _c !== void 0 ? _c : (_d = media_share.carousel_media) === null || _d === void 0 ? void 0 : _d.length;
+                const carouselLength = (_f = media_share.carousel_media_count) !== null && _f !== void 0 ? _f : (_g = media_share.carousel_media) === null || _g === void 0 ? void 0 : _g.length;
                 const body = [];
                 Array.from(Array(carouselLength)).forEach((_, i) => {
                     const isVideo = media_share.carousel_media[i].media_type === 2;
@@ -211,7 +212,7 @@ const handleStoryShare = (message, options) => __awaiter(void 0, void 0, void 0,
 });
 exports.handleStoryShare = handleStoryShare;
 const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f;
+    var _h, _j;
     if (message.processed_business_suggestion)
         return {
             type: types_1.MESSAGE_TYPE.TEXT,
@@ -220,7 +221,7 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
     if (message.item_type === 'text')
         return {
             type: types_1.MESSAGE_TYPE.TEXT,
-            body: (_e = message.text) !== null && _e !== void 0 ? _e : ''
+            body: (_h = message.text) !== null && _h !== void 0 ? _h : ''
         };
     if (message.item_type === 'placeholder') {
         if (message.placeholder.message === 'Use the latest version of the Instagram app to see this reel.') {
@@ -230,7 +231,7 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
                     headers: yield (0, exports.getInstagramHeaders)(ig),
                     method: 'GET'
                 });
-                const media = (_f = response.data.items) === null || _f === void 0 ? void 0 : _f[0].clip.clip;
+                const media = (_j = response.data.items) === null || _j === void 0 ? void 0 : _j[0].clip.clip;
                 return {
                     type: types_1.MESSAGE_TYPE.REEL,
                     body: {
@@ -287,29 +288,31 @@ const isVideo = (type) => [
 ].includes(type);
 exports.isVideo = isVideo;
 const uploadPhoto = (slack, URL, channel, options) => __awaiter(void 0, void 0, void 0, function* () {
+    var _k, _l, _m, _o, _p;
     yield slack.client.files.uploadV2({
         token: options.slack.credentials.OAUTH_TOKEN,
         channel_id: channel,
         file: stream_1.Readable.from((yield axios_1.default.get(URL, {
             responseType: 'stream'
         })).data),
-        filename: URL.split('/').slice(-1)[0].split('?')[0]
+        filename: (_p = (_o = (_m = (_l = (_k = URL.split('/')) === null || _k === void 0 ? void 0 : _k.slice(-1)) === null || _l === void 0 ? void 0 : _l[0]) === null || _m === void 0 ? void 0 : _m.split('?')) === null || _o === void 0 ? void 0 : _o[0]) !== null && _p !== void 0 ? _p : 'photo.jpg'
     });
 });
 exports.uploadPhoto = uploadPhoto;
 const uploadVideo = (slack, URL, channel, options) => __awaiter(void 0, void 0, void 0, function* () {
+    var _q, _r, _s, _t, _u;
     yield slack.client.files.uploadV2({
         token: options.slack.credentials.OAUTH_TOKEN,
         channel_id: channel,
         file: stream_1.Readable.from((yield axios_1.default.get(URL, {
             responseType: 'stream'
         })).data),
-        filename: URL.split('/').slice(-1)[0].split('?')[0],
+        filename: (_u = (_t = (_s = (_r = (_q = URL.split('/')) === null || _q === void 0 ? void 0 : _q.slice(-1)) === null || _r === void 0 ? void 0 : _r[0]) === null || _s === void 0 ? void 0 : _s.split('?')) === null || _t === void 0 ? void 0 : _t[0]) !== null && _u !== void 0 ? _u : 'video.mp4',
     });
 });
 exports.uploadVideo = uploadVideo;
 const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g, e_1, _h, _j;
+    var _v, e_1, _w, _x;
     const structuredMessage = yield (0, exports.getStructuredMessage)(ig, message, options);
     if (options.enableLogging)
         console.log('⚡ Received Instagram message: ', structuredMessage);
@@ -320,10 +323,10 @@ const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, voi
     if (messageHasMultipleNonTextMedia) {
         try {
             try {
-                for (var _k = true, _l = __asyncValues(structuredMessage.body), _m; _m = yield _l.next(), _g = _m.done, !_g; _k = true) {
-                    _j = _m.value;
-                    _k = false;
-                    const item = _j;
+                for (var _y = true, _z = __asyncValues(structuredMessage.body), _0; _0 = yield _z.next(), _v = _0.done, !_v; _y = true) {
+                    _x = _0.value;
+                    _y = false;
+                    const item = _x;
                     if (item.mediaType === types_1.MESSAGE_TYPE.PHOTO) {
                         yield (0, exports.uploadPhoto)(slack, item.body, channel, options);
                     }
@@ -335,7 +338,7 @@ const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, voi
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (!_k && !_g && (_h = _l.return)) yield _h.call(_l);
+                    if (!_y && !_v && (_w = _z.return)) yield _w.call(_z);
                 }
                 finally { if (e_1) throw e_1.error; }
             }

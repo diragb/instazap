@@ -98,8 +98,8 @@ export const login = async (ig: IgApiClient, username: string, password: string)
 export const getInstagramHeaders = async (ig: IgApiClientRealtime) => {
   const response = await axios.get('https://www.instagram.com/apple/')
   const html = response.data as string
-  const CSRFToken = html.split('csrf_token')[1].split('\\"')[2]
-  const IGAppID = html.split('X-IG-App-ID')[1].split(',')[0].replaceAll('"', '').replace(':', '')
+  const CSRFToken = html?.split('csrf_token')[1]?.split('\\"')[2]
+  const IGAppID = html?.split('X-IG-App-ID')[1]?.split(',')[0]?.replaceAll('"', '').replace(':', '')
   return {
       ...response.headers,
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) 20100101 Firefox/103.0',
@@ -316,7 +316,7 @@ export const uploadPhoto = async (
     file: Readable.from((await axios.get(URL, {
       responseType: 'stream'
     })).data),
-    filename: URL.split('/').slice(-1)[0].split('?')[0]
+    filename: URL.split('/')?.slice(-1)?.[0]?.split('?')?.[0] ?? 'photo.jpg'
   })
 }
 
@@ -332,7 +332,7 @@ export const uploadVideo = async (
     file: Readable.from((await axios.get(URL, {
       responseType: 'stream'
     })).data),
-    filename: URL.split('/').slice(-1)[0].split('?')[0],
+    filename: URL.split('/')?.slice(-1)?.[0]?.split('?')?.[0] ?? 'video.mp4',
   })
 }
 

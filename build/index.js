@@ -20,11 +20,11 @@ const InstaZap = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const ig = (0, instagram_mqtt_1.withRealtime)(new instagram_private_api_1.IgApiClient());
     ig.state.generateDevice(options.instagram.credentials.USERNAME);
     const slack = new bolt_1.App({
-        token: process.env.SLACK_BOT_TOKEN,
-        signingSecret: process.env.SLACK_SIGNING_SECRET
+        token: options.slack.credentials.OAUTH_TOKEN,
+        signingSecret: options.slack.credentials.SIGNING_SECRET
     });
     console.log('⚡ Starting Slack Bot...');
-    yield slack.start(process.env.PORT || 3000);
+    yield slack.start(options.slack.port || 3000);
     console.log('⚡ Started Slack Bot');
     console.log('⚡ Logging in to Instagram...');
     const loggedInUser = yield (0, utils_1.login)(ig, options.instagram.credentials.USERNAME, options.instagram.credentials.PASSWORD);

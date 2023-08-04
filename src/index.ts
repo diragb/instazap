@@ -15,12 +15,12 @@ const InstaZap = async (options: InstaZapOptions) => {
   const ig = withRealtime(new IgApiClient())
   ig.state.generateDevice(options.instagram.credentials.USERNAME)
   const slack = new App({
-    token: process.env.SLACK_BOT_TOKEN,
-    signingSecret: process.env.SLACK_SIGNING_SECRET
+    token: options.slack.credentials.OAUTH_TOKEN,
+    signingSecret: options.slack.credentials.SIGNING_SECRET
   })
 
   console.log('⚡ Starting Slack Bot...')
-  await slack.start(process.env.PORT || 3000)
+  await slack.start(options.slack.port || 3000)
   console.log('⚡ Started Slack Bot')
   console.log('⚡ Logging in to Instagram...')
   const loggedInUser = await login(

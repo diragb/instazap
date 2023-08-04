@@ -55,6 +55,7 @@ export interface InstaZapOptions {
   slack: {
     channel: string
     customChannelMapper?: (message: StructuredMessage) => string
+    port?: number
     credentials: {
       OAUTH_TOKEN: string
       SIGNING_SECRET: string

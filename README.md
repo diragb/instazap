@@ -73,6 +73,11 @@ This is the default channel for all your Instagram messages.
 
 If you want specific messages to go into certain channels (such as, Reels in #reels, and so on) then utilize this custom function that maps a message to a channel ID.
 
+## port
+`number` - **OPTIONAL**
+
+Port for Slack Bot.
+
 ### credentials
 `object`
 The credentials for the Slack bot.
