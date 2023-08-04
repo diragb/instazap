@@ -102,7 +102,7 @@ const getInstagramHeaders = (ig) => __awaiter(void 0, void 0, void 0, function* 
     const response = yield axios_1.default.get('https://www.instagram.com/apple/');
     const html = response.data;
     const CSRFToken = (_a = html === null || html === void 0 ? void 0 : html.split('csrf_token')[1]) === null || _a === void 0 ? void 0 : _a.split('\\"')[2];
-    const IGAppID = (_c = (_b = html === null || html === void 0 ? void 0 : html.split('X-IG-App-ID')[1]) === null || _b === void 0 ? void 0 : _b.split(',')[0]) === null || _c === void 0 ? void 0 : _c.replaceAll('"', '').replace(':', '');
+    const IGAppID = (_c = (_b = html === null || html === void 0 ? void 0 : html.split('X-IG-App-ID')[1]) === null || _b === void 0 ? void 0 : _b.split(',')[0]) === null || _c === void 0 ? void 0 : _c.replace(/\"/g, '').replace(':', '');
     return Object.assign(Object.assign({}, response.headers), { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) 20100101 Firefox/103.0', 'Accept': '*/*', 'Accept-Language': 'en,en-US;q=0.3', 'X-Csrftoken': CSRFToken, 'X-IG-App-ID': IGAppID, 'X-ASBD-ID': '198337', 'X-IG-WWW-Claim': 'hmac.AR2vqJv-rMUJZ0y3MD6rTCGpFTZHRY8OD0gGoEPuHcCI9jtN', 'Origin': 'https://www.instagram.com', 'DNT': '1', 'Alt-Used': 'i.instagram.com', 'Connection': 'keep-alive', 'Referer': 'https://www.instagram.com/', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'sec-ch-ua': '" Not A;Brand";v="99", "Chromium";v="102"', 'sec-ch-ua-mobile': '?0', 'sec-ch-ua-platform': '"Linux"', 'Sec-Fetch-Dest': 'empty', 'Sec-Fetch-Mode': 'cors', 'Sec-Fetch-Site': 'same-site', 'Sec-GPC': '1', 'Cookie': ig.state.cookieJar.getCookieString('https://www.instagram.com') });
 });
 exports.getInstagramHeaders = getInstagramHeaders;
