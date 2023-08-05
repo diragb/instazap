@@ -19,14 +19,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleNewMessages = exports.uploadVideo = exports.uploadPhoto = exports.isVideo = exports.isPhoto = exports.getStructuredMessage = exports.handleStoryShare = exports.handleMediaShare = exports.handlePostVideo = exports.getLargestCandidate = exports.getInstagramHeaders = exports.login = exports.executeRequestsFlow = exports.facebookOta = void 0;
+exports.startRandomSleepService = exports.createRandomSleep = exports.simulateRandomSleep = exports.handleNewMessages = exports.attemptReconnection = exports.connectToRealtime = exports.uploadVideo = exports.uploadPhoto = exports.isVideo = exports.isPhoto = exports.getStructuredMessage = exports.handleStoryShare = exports.handleMediaShare = exports.handlePostVideo = exports.getLargestCandidate = exports.getInstagramHeaders = exports.login = exports.executeRequestsFlow = exports.facebookOta = exports.getRandomNumberBetween = void 0;
 // Packages:
 const bluebird_1 = __importDefault(require("bluebird"));
 const lodash_1 = __importDefault(require("lodash"));
 const axios_1 = __importDefault(require("axios"));
 const stream_1 = require("stream");
+const human_date_1 = __importDefault(require("human-date"));
 const types_1 = require("./types");
+// Constants:
+const SECONDS = (n) => n * 1000;
+const MINUTES = (n) => n * SECONDS(60);
+const HOURS = (n) => n * MINUTES(60);
 // Functions:
+const getRandomNumberBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+exports.getRandomNumberBetween = getRandomNumberBetween;
 const facebookOta = (ig) => __awaiter(void 0, void 0, void 0, function* () {
     const uid = ig.state.cookieUserId;
     const { body } = yield ig.request.send({
@@ -58,7 +65,7 @@ const login = (ig, username, password) => __awaiter(void 0, void 0, void 0, func
             yield ig.simulate.preLoginFlow();
         }
         catch (e) {
-            console.log('⚡ Pre-login flow failed, proceeding with login');
+            console.warn('⚡ Pre-login flow failed, proceeding with login');
         }
         const loggedInUser = yield ig.account.login(username, password);
         process.nextTick(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -190,8 +197,8 @@ const handleMediaShare = (ig, message, options) => __awaiter(void 0, void 0, voi
     catch (err) {
         console.error(err);
         return {
-            type: types_1.MESSAGE_TYPE.TEXT,
-            body: 'Unknown Message Type'
+            type: types_1.MESSAGE_TYPE.ERROR,
+            body: 'Encountered An Error'
         };
     }
 });
@@ -220,7 +227,7 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
     var _k, _l, _m, _o;
     if (message.processed_business_suggestion)
         return {
-            type: types_1.MESSAGE_TYPE.TEXT,
+            type: types_1.MESSAGE_TYPE.UNKNOWN,
             body: 'Unknown Message Type'
         };
     if (message.item_type === 'text')
@@ -249,8 +256,8 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
             catch (err) {
                 console.error(err);
                 return {
-                    type: types_1.MESSAGE_TYPE.TEXT,
-                    body: 'Unknown Message Type'
+                    type: types_1.MESSAGE_TYPE.ERROR,
+                    body: 'Encountered An Error'
                 };
             }
         }
@@ -261,8 +268,8 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
             catch (err) {
                 console.error(err);
                 return {
-                    type: types_1.MESSAGE_TYPE.TEXT,
-                    body: 'Unknown Message Type'
+                    type: types_1.MESSAGE_TYPE.ERROR,
+                    body: 'Encountered An Error'
                 };
             }
         }
@@ -274,7 +281,7 @@ const getStructuredMessage = (ig, message, options) => __awaiter(void 0, void 0,
         return yield (0, exports.handleStoryShare)(message, options);
     }
     return {
-        type: types_1.MESSAGE_TYPE.TEXT,
+        type: types_1.MESSAGE_TYPE.UNKNOWN,
         body: 'Unknown Message Type'
     };
 });
@@ -316,9 +323,56 @@ const uploadVideo = (slack, URL, channel, options) => __awaiter(void 0, void 0, 
     });
 });
 exports.uploadVideo = uploadVideo;
+const connectToRealtime = (ig, reconnectionIteration = 1, attemptReconnections = true) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield ig.realtime.connect({
+            irisData: yield ig.feed.directInbox().request(),
+        });
+        console.warn('⚡ Connected to Instagram');
+        return true;
+    }
+    catch (err) {
+        console.warn('⚡ Failed to connect to Instagram');
+        if (attemptReconnections && reconnectionIteration <= 3) {
+            console.log(`⚡ Retrying connection to Instagram... (${reconnectionIteration} of 3 attempts)`);
+            (0, exports.connectToRealtime)(ig, reconnectionIteration + 1);
+        }
+        if (reconnectionIteration > 3) {
+            console.error(`⚡ Failed to reconnect to Instagram after three attempts`);
+            try {
+                console.error(`⚡ Turning off InstaZap - Please restart service manually`);
+                yield ig.account.logout();
+                yield ig.realtime.disconnect();
+            }
+            catch (err) {
+                console.error(err);
+            }
+        }
+        return false;
+    }
+});
+exports.connectToRealtime = connectToRealtime;
+const attemptReconnection = (ig) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        console.log('⚡ Attempting reconnection...');
+        yield ig.realtime.disconnect();
+    }
+    catch (err) {
+        console.warn('⚡ Failed to disconnect prior to reconnection');
+    }
+    return yield (0, exports.connectToRealtime)(ig);
+});
+exports.attemptReconnection = attemptReconnection;
 const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, void 0, void 0, function* () {
     var _z, e_1, _0, _1;
     const structuredMessage = yield (0, exports.getStructuredMessage)(ig, message, options);
+    if (structuredMessage.type === types_1.MESSAGE_TYPE.UNKNOWN)
+        return;
+    if (structuredMessage.type === types_1.MESSAGE_TYPE.ERROR) {
+        console.warn('⚡ Failed to retrieve Instagram message');
+        yield (0, exports.attemptReconnection)(ig);
+        return;
+    }
     if (options.enableLogging)
         console.log('⚡ Received Instagram message: ', structuredMessage);
     const channel = options.slack.customChannelMapper !== undefined ?
@@ -384,3 +438,41 @@ const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, voi
     }
 });
 exports.handleNewMessages = handleNewMessages;
+const simulateRandomSleep = (ig, timeToSleep, timeToWake) => {
+    setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
+        console.log('⚡ Device turned off');
+        // From now on, you won't receive any realtime-data as you *aren't in the app*
+        // the keepAliveTimeout is somehow a 'constant' by instagram
+        yield ig.realtime.direct.sendForegroundState({
+            inForegroundApp: false,
+            inForegroundDevice: false,
+            keepAliveTimeout: 900,
+        });
+    }), timeToSleep);
+    setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
+        console.log('⚡ Device turned on');
+        yield ig.realtime.direct.sendForegroundState({
+            inForegroundApp: true,
+            inForegroundDevice: true,
+            keepAliveTimeout: 60,
+        });
+    }), timeToSleep + timeToWake);
+};
+exports.simulateRandomSleep = simulateRandomSleep;
+const createRandomSleep = (ig, options) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    const [timeToSleep, timeToWake] = [
+        (0, exports.getRandomNumberBetween)((_c = (_b = (_a = options.sleep) === null || _a === void 0 ? void 0 : _a.randomSleepRange) === null || _b === void 0 ? void 0 : _b.min) !== null && _c !== void 0 ? _c : SECONDS(2), (_f = (_e = (_d = options.sleep) === null || _d === void 0 ? void 0 : _d.randomSleepRange) === null || _e === void 0 ? void 0 : _e.max) !== null && _f !== void 0 ? _f : MINUTES(1.5)),
+        (0, exports.getRandomNumberBetween)((_j = (_h = (_g = options.sleep) === null || _g === void 0 ? void 0 : _g.randomSleepRange) === null || _h === void 0 ? void 0 : _h.min) !== null && _j !== void 0 ? _j : SECONDS(2), (_m = (_l = (_k = options.sleep) === null || _k === void 0 ? void 0 : _k.randomSleepRange) === null || _l === void 0 ? void 0 : _l.max) !== null && _m !== void 0 ? _m : MINUTES(1.5))
+    ];
+    (0, exports.simulateRandomSleep)(ig, timeToSleep, timeToWake);
+};
+exports.createRandomSleep = createRandomSleep;
+const startRandomSleepService = (ig, options) => {
+    var _a, _b, _c, _d, _e, _f;
+    (0, exports.createRandomSleep)(ig, options);
+    const timeToNextSimulation = (0, exports.getRandomNumberBetween)((_c = (_b = (_a = options.sleep) === null || _a === void 0 ? void 0 : _a.randomSleepRange) === null || _b === void 0 ? void 0 : _b.min) !== null && _c !== void 0 ? _c : MINUTES(30), (_f = (_e = (_d = options.sleep) === null || _d === void 0 ? void 0 : _d.randomSleepRange) === null || _e === void 0 ? void 0 : _e.max) !== null && _f !== void 0 ? _f : HOURS(3));
+    console.log(`Next sleep is ${human_date_1.default.relativeTime(timeToNextSimulation / 1000, { allUnits: true })}`);
+    setTimeout(() => (0, exports.startRandomSleepService)(ig, options), timeToNextSimulation);
+};
+exports.startRandomSleepService = startRandomSleepService;

@@ -3,6 +3,7 @@ import { IgApiClient } from 'instagram-private-api';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { InstaZapOptions, MESSAGE_TYPE, StructuredMessage, VideoMessageBody } from './types';
 import { App } from '@slack/bolt';
+export declare const getRandomNumberBetween: (min: number, max: number) => number;
 export declare const facebookOta: (ig: IgApiClient) => Promise<any>;
 export declare const executeRequestsFlow: ({ requests, concurrency, toShuffle }: {
     requests: (() => Promise<any>)[];
@@ -79,5 +80,10 @@ export declare const isPhoto: (type: MESSAGE_TYPE) => boolean;
 export declare const isVideo: (type: MESSAGE_TYPE) => boolean;
 export declare const uploadPhoto: (slack: App<StringIndexed>, URL: string, channel: string, options: InstaZapOptions) => Promise<void>;
 export declare const uploadVideo: (slack: App<StringIndexed>, URL: string, channel: string, options: InstaZapOptions) => Promise<void>;
+export declare const connectToRealtime: (ig: IgApiClientRealtime, reconnectionIteration?: number, attemptReconnections?: boolean) => Promise<boolean>;
+export declare const attemptReconnection: (ig: IgApiClientRealtime) => Promise<boolean>;
 export declare const handleNewMessages: (ig: IgApiClientRealtime, slack: App<StringIndexed>, message: MessageSyncMessage, options: InstaZapOptions) => Promise<void>;
+export declare const simulateRandomSleep: (ig: IgApiClientRealtime, timeToSleep: number, timeToWake: number) => void;
+export declare const createRandomSleep: (ig: IgApiClientRealtime, options: InstaZapOptions) => void;
+export declare const startRandomSleepService: (ig: IgApiClientRealtime, options: InstaZapOptions) => void;
 //# sourceMappingURL=utils.d.ts.map

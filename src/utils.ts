@@ -3,6 +3,8 @@ import Bluebird from 'bluebird'
 import lodash from 'lodash'
 import axios from 'axios'
 import { Readable } from 'stream'
+import humanDate from 'human-date'
+
 
 // Typescript:
 import { IgApiClientRealtime, MessageSyncMessage } from 'instagram_mqtt'
@@ -18,7 +20,15 @@ import {
 import { App } from '@slack/bolt'
 
 
+// Constants:
+const SECONDS = (n: number) => n * 1000
+const MINUTES = (n: number) => n * SECONDS(60)
+const HOURS = (n: number) => n * MINUTES(60)
+
+
 // Functions:
+export const getRandomNumberBetween = (min: number, max: number) => Math.floor(Math.random() * (max - min +1)) + min
+
 export const facebookOta = async (ig: IgApiClient) => {
   const uid = ig.state.cookieUserId
   const { body } = await ig.request.send({
@@ -57,7 +67,7 @@ export const login = async (ig: IgApiClient, username: string, password: string)
     try {
       await ig.simulate.preLoginFlow()
     } catch(e) {
-      console.log('⚡ Pre-login flow failed, proceeding with login')
+      console.warn('⚡ Pre-login flow failed, proceeding with login')
     }
     const loggedInUser = await ig.account.login(username, password)
     process.nextTick(async () => {
@@ -204,8 +214,8 @@ export const handleMediaShare = async (
   } catch(err) {
     console.error(err)
     return {
-      type: MESSAGE_TYPE.TEXT,
-      body: 'Unknown Message Type'
+      type: MESSAGE_TYPE.ERROR,
+      body: 'Encountered An Error'
     }
   }
 }
@@ -236,7 +246,7 @@ export const getStructuredMessage = async (
   options?: InstaZapOptions
 ): Promise<StructuredMessage> => {
   if ((message as any).processed_business_suggestion) return {
-    type: MESSAGE_TYPE.TEXT,
+    type: MESSAGE_TYPE.UNKNOWN,
     body: 'Unknown Message Type'
   }
   if (message.item_type === 'text') return {
@@ -263,8 +273,8 @@ export const getStructuredMessage = async (
       } catch(err) {
         console.error(err)
         return {
-          type: MESSAGE_TYPE.TEXT,
-          body: 'Unknown Message Type'
+          type: MESSAGE_TYPE.ERROR,
+          body: 'Encountered An Error'
         }
       }
     } else if ((message as any).placeholder.message === 'Use the latest version of the Instagram app to see this type of message.') {
@@ -273,8 +283,8 @@ export const getStructuredMessage = async (
       } catch(err) {
         console.error(err)
         return {
-          type: MESSAGE_TYPE.TEXT,
-          body: 'Unknown Message Type'
+          type: MESSAGE_TYPE.ERROR,
+          body: 'Encountered An Error'
         }
       }
     }
@@ -286,7 +296,7 @@ export const getStructuredMessage = async (
     return await handleStoryShare(message, options)
   }
   return {
-    type: MESSAGE_TYPE.TEXT,
+    type: MESSAGE_TYPE.UNKNOWN,
     body: 'Unknown Message Type'
   }
 }
@@ -336,6 +346,42 @@ export const uploadVideo = async (
   })
 }
 
+export const connectToRealtime = async (ig: IgApiClientRealtime, reconnectionIteration = 1, attemptReconnections = true) => {
+  try {
+    await ig.realtime.connect({
+      irisData: await ig.feed.directInbox().request(),
+    })
+    console.warn('⚡ Connected to Instagram')
+    return true
+  } catch(err) {
+    console.warn('⚡ Failed to connect to Instagram')
+    if (attemptReconnections && reconnectionIteration <= 3) {
+      console.log(`⚡ Retrying connection to Instagram... (${ reconnectionIteration } of 3 attempts)`)
+      connectToRealtime(ig, reconnectionIteration + 1)
+    } if (reconnectionIteration > 3) {
+      console.error(`⚡ Failed to reconnect to Instagram after three attempts`)
+      try {
+        console.error(`⚡ Turning off InstaZap - Please restart service manually`)
+        await ig.account.logout()
+        await ig.realtime.disconnect()
+      } catch(err) {
+        console.error(err)
+      }
+    }
+    return false
+  }
+}
+
+export const attemptReconnection = async (ig: IgApiClientRealtime) => {
+  try {
+    console.log('⚡ Attempting reconnection...')
+    await ig.realtime.disconnect()
+  } catch(err) {
+    console.warn('⚡ Failed to disconnect prior to reconnection')
+  }
+  return await connectToRealtime(ig)
+}
+
 export const handleNewMessages = async (
   ig: IgApiClientRealtime,
   slack: App<StringIndexed>,
@@ -343,6 +389,12 @@ export const handleNewMessages = async (
   options: InstaZapOptions
 ) => {
   const structuredMessage = await getStructuredMessage(ig, message, options)
+  if (structuredMessage.type === MESSAGE_TYPE.UNKNOWN) return
+  if (structuredMessage.type === MESSAGE_TYPE.ERROR) {
+    console.warn('⚡ Failed to retrieve Instagram message')
+    await attemptReconnection(ig)
+    return
+  }
   if (options.enableLogging) console.log('⚡ Received Instagram message: ', structuredMessage)
   const channel = options.slack.customChannelMapper !== undefined ?
     options.slack.customChannelMapper(structuredMessage) :
@@ -385,4 +437,54 @@ export const handleNewMessages = async (
       console.error(err)
     }
   }
+}
+
+export const simulateRandomSleep = (
+  ig: IgApiClientRealtime,
+  timeToSleep: number,
+  timeToWake: number
+) => {
+  setTimeout(async () => {
+    console.log('⚡ Device turned off')
+    // From now on, you won't receive any realtime-data as you *aren't in the app*
+    // the keepAliveTimeout is somehow a 'constant' by instagram
+    await ig.realtime.direct.sendForegroundState({
+      inForegroundApp: false,
+      inForegroundDevice: false,
+      keepAliveTimeout: 900,
+    })
+  }, timeToSleep)
+
+  setTimeout(async () => {
+    console.log('⚡ Device turned on')
+    await ig.realtime.direct.sendForegroundState({
+      inForegroundApp: true,
+      inForegroundDevice: true,
+      keepAliveTimeout: 60,
+    })
+  }, timeToSleep + timeToWake)
+}
+
+export const createRandomSleep = (ig: IgApiClientRealtime, options: InstaZapOptions) => {
+  const [ timeToSleep, timeToWake ] = [
+    getRandomNumberBetween(
+      options.sleep?.randomSleepRange?.min ?? SECONDS(2),
+      options.sleep?.randomSleepRange?.max ?? MINUTES(1.5)
+    ),
+    getRandomNumberBetween(
+      options.sleep?.randomSleepRange?.min ?? SECONDS(2),
+      options.sleep?.randomSleepRange?.max ?? MINUTES(1.5)
+    )
+  ]
+  simulateRandomSleep(ig, timeToSleep, timeToWake)
+}
+
+export const startRandomSleepService = (ig: IgApiClientRealtime, options: InstaZapOptions) => {
+  createRandomSleep(ig, options)
+  const timeToNextSimulation = getRandomNumberBetween(
+    options.sleep?.randomSleepRange?.min ?? MINUTES(30),
+    options.sleep?.randomSleepRange?.max ?? HOURS(3)
+  )
+  console.log(`Next sleep is ${ humanDate.relativeTime(timeToNextSimulation / 1000, { allUnits: true }) }`)
+  setTimeout(() => startRandomSleepService(ig, options), timeToNextSimulation)
 }

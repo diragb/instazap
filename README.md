@@ -61,6 +61,11 @@ Congratulations! Your Slack Bot is now ready. 🎉
 `object`
 The credentials for the Instagram account.
 
+### attemptReconnections
+`boolean` - **OPTIONAL**
+
+Handles reconnections on connection failure of any sort with the Instagram API.
+
 ## slack
 `object`
 ### channel
@@ -95,14 +100,31 @@ As the name suggests, it ignores the aspect ratio of the media and goes for the 
 ## enableLogging
 `boolean` - **OPTIONAL**
 
-
 Enable additional logs for debugging. Error logs are unaffected by this.
+
+## sleep
+`object` - **OPTIONAL**
+
+### randomSleepRange
+`object` - **OPTIONAL**
+
+Determines when how want the bot to sleep at the beginning of a sleep cycle, and how long you want it to be asleep. Default values work well, but feel free to play with it.
+
+The ranges are used to generate a random time value that is eventually used - a value betweeen 2 seconds to 1.5 minutes is chosen by default.
+
+### timeToNextSleepRange
+`object` - **OPTIONAL**
+
+Determines the time period between the bot's sleep-wake simulations. Default value of ranges is 30 mins to 3 hours. This maintains the Instagram MQTT API connection health.
 
 # Troubleshooting
 If the bot stops working at any time, it is probably because of the following reasons (listed in order of probability):
 1. 🚩 **Instagram flagged your account**: This requires you to login from your mobile (or any trusted device), request for an OTP and fill it.
 2. 🤕 **A malformed message was sent to Instagram**: This will pop up in the error logs. You may create a new issue for this.
 3. 😪  **A malformed message was forwarded to Slack**: This will pop up in the error logs. You may create a new issue for this.
+
+# Disclaimer
+Neither the author, the contributors, nor this tool (or its underlying packages) are responsible for **any** damage that you may cause to yourself or others. Please do not use this tool for *evil* purposes.
 
 # License
 MIT

@@ -1,8 +1,9 @@
 // Packages:
+import 'dotenv/config'
 import { IgApiClient } from 'instagram-private-api'
 import { withRealtime } from 'instagram_mqtt'
 import { App } from '@slack/bolt'
-import { handleNewMessages, login } from './utils'
+import { attemptReconnection, connectToRealtime, handleNewMessages, login, startRandomSleepService } from './utils'
 
 
 // Typescript:
@@ -36,10 +37,14 @@ const InstaZap = async (options: InstaZapOptions) => {
   ig.realtime.on('message', async ({ message }) => await handleNewMessages(ig, slack, message, options))
 
   ig.realtime.on('error', console.error)
-  ig.realtime.on('close', () => console.error('⚡ Instagram RealtimeClient closed'))
-  await ig.realtime.connect({
-    irisData: await ig.feed.directInbox().request(),
+  ig.realtime.on('close', async () => {
+    console.error('⚡ Instagram RealtimeClient closed')
+    await attemptReconnection(ig)
   })
+  if (!await connectToRealtime(ig)) {
+    console.error(`⚡ Turning off InstaZap - Please restart service manually`)
+    return
+  }
 
   // Simulate turning the device off after 2s and turning it back on after another 2s
   setTimeout(() => {
@@ -61,8 +66,27 @@ const InstaZap = async (options: InstaZapOptions) => {
       keepAliveTimeout: 60,
     })
   }, 4000)
+
+  startRandomSleepService(ig, options)
 }
 
 
 // Exports:
 export default InstaZap
+
+// Testing (comment it out):
+// InstaZap({
+//   instagram: {
+//     credentials: {
+//       USERNAME: process.env['IG_USERNAME'] as string,
+//       PASSWORD: process.env['IG_PASSWORD'] as string,
+//     }
+//   },
+//   slack: {
+//     channel: 'C05L8T0JMQA',
+//     credentials: {
+//       OAUTH_TOKEN: process.env['SLACK_BOT_TOKEN'] as string,
+//       SIGNING_SECRET: process.env['SLACK_SIGNING_SECRET'] as string,
+//     }
+//   }
+// })

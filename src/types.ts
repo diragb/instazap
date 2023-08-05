@@ -7,7 +7,9 @@ export enum MESSAGE_TYPE {
   POST_VIDEO = 'POST_VIDEO',
   CAROUSEL = 'CAROUSEL',
   STORY_PHOTO = 'STORY_PHOTO',
-  STORY_VIDEO = 'STORY_VIDEO'
+  STORY_VIDEO = 'STORY_VIDEO',
+  UNKNOWN = 'UNKNOWN',
+  ERROR = 'ERROR',
 }
 
 export type VideoMessageBody = {
@@ -21,7 +23,9 @@ export type StructuredNonCarouselMessage = {
     MESSAGE_TYPE.TEXT |
     MESSAGE_TYPE.PHOTO |
     MESSAGE_TYPE.POST_PHOTO |
-    MESSAGE_TYPE.STORY_PHOTO
+    MESSAGE_TYPE.STORY_PHOTO |
+    MESSAGE_TYPE.UNKNOWN |
+    MESSAGE_TYPE.ERROR
   body: string
 } | {
   type:
@@ -51,6 +55,7 @@ export interface InstaZapOptions {
       USERNAME: string
       PASSWORD: string
     }
+    attemptReconnections?: boolean
   }
   slack: {
     channel: string
@@ -64,4 +69,14 @@ export interface InstaZapOptions {
   getAllItemsFromCarousel?: boolean
   ignoreAspectRatio?: boolean
   enableLogging?: boolean
+  sleep?: {
+    randomSleepRange?: {
+      min?: number
+      max?: number
+    }
+    timeToNextSleepRange?: {
+      min?: number
+      max?: number
+    }
+  }
 }
