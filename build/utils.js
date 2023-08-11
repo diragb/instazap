@@ -19,7 +19,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startRandomSleepService = exports.createRandomSleep = exports.simulateRandomSleep = exports.handleNewMessages = exports.attemptReconnection = exports.connectToRealtime = exports.uploadVideo = exports.uploadPhoto = exports.isVideo = exports.isPhoto = exports.getStructuredMessage = exports.handleStoryShare = exports.handleMediaShare = exports.handlePostVideo = exports.getLargestCandidate = exports.getInstagramHeaders = exports.login = exports.executeRequestsFlow = exports.facebookOta = exports.getRandomNumberBetween = void 0;
+exports.startRandomSleepService = exports.createRandomSleep = exports.simulateRandomSleep = exports.handleNewMessages = exports.markAsSeen = exports.attemptReconnection = exports.connectToRealtime = exports.uploadVideo = exports.uploadPhoto = exports.isVideo = exports.isPhoto = exports.getStructuredMessage = exports.handleStoryShare = exports.handleMediaShare = exports.handlePostVideo = exports.getLargestCandidate = exports.getInstagramHeaders = exports.login = exports.executeRequestsFlow = exports.facebookOta = exports.getRandomNumberBetween = void 0;
 // Packages:
 const bluebird_1 = __importDefault(require("bluebird"));
 const lodash_1 = __importDefault(require("lodash"));
@@ -363,8 +363,20 @@ const attemptReconnection = (ig) => __awaiter(void 0, void 0, void 0, function* 
     return yield (0, exports.connectToRealtime)(ig);
 });
 exports.attemptReconnection = attemptReconnection;
+const markAsSeen = (ig, message) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!message.thread_id)
+            throw new Error('No Thread ID for message');
+        yield ig.entity.directThread(message.thread_id).markItemSeen(message.item_id);
+    }
+    catch (err) {
+        console.error('⚡ Could not mark message as seen due to this error: ', err);
+    }
+});
+exports.markAsSeen = markAsSeen;
 const handleNewMessages = (ig, slack, message, options) => __awaiter(void 0, void 0, void 0, function* () {
     var _z, e_1, _0, _1;
+    yield (0, exports.markAsSeen)(ig, message);
     const structuredMessage = yield (0, exports.getStructuredMessage)(ig, message, options);
     if (structuredMessage.type === types_1.MESSAGE_TYPE.UNKNOWN)
         return;

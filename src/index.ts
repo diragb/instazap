@@ -3,7 +3,14 @@ import 'dotenv/config'
 import { IgApiClient } from 'instagram-private-api'
 import { withRealtime } from 'instagram_mqtt'
 import { App } from '@slack/bolt'
-import { attemptReconnection, connectToRealtime, handleNewMessages, login, startRandomSleepService } from './utils'
+import MockSlackApp from './testing'
+import {
+  attemptReconnection,
+  connectToRealtime,
+  handleNewMessages,
+  login,
+  startRandomSleepService
+} from './utils'
 
 
 // Typescript:
@@ -14,7 +21,7 @@ import { InstaZapOptions } from './types'
 const InstaZap = async (options: InstaZapOptions) => {
   const ig = withRealtime(new IgApiClient())
   ig.state.generateDevice(options.instagram.credentials.USERNAME)
-  const slack = new App({
+  const slack = options.slack.mock ? MockSlackApp() : new App({
     token: options.slack.credentials.OAUTH_TOKEN,
     signingSecret: options.slack.credentials.SIGNING_SECRET
   })
@@ -35,6 +42,7 @@ const InstaZap = async (options: InstaZapOptions) => {
   console.log('⚡ Ready')
 
   ig.realtime.on('message', async ({ message }) => await handleNewMessages(ig, slack, message, options))
+  // ig.realtime.on('message', async ({ message }) => console.log((message['media_share'] as any)['carousel_media']))
 
   ig.realtime.on('error', console.error)
   ig.realtime.on('close', async () => {

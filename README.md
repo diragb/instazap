@@ -78,6 +78,11 @@ This is the default channel for all your Instagram messages.
 
 If you want specific messages to go into certain channels (such as, Reels in #reels, and so on) then utilize this custom function that maps a message to a channel ID.
 
+### mock
+`boolean` - **OPTIONAL**
+
+Set this as true if you'd like to mock the Slack app and get console logging of messages instead of them being posted to Slack channels.
+
 ## port
 `number` - **OPTIONAL**
 

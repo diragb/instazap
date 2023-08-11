@@ -18,6 +18,7 @@ import {
   VideoMessageBody
 } from './types'
 import { App } from '@slack/bolt'
+import { MEDIA_SHARE_MESSAGE } from './messageTypes'
 
 
 // Constants:
@@ -156,12 +157,12 @@ export const handlePostVideo = (media: any, options?: InstaZapOptions): {
 
 export const handleMediaShare = async (
   ig: IgApiClientRealtime,
-  message: any,
+  message: MEDIA_SHARE_MESSAGE,
   options?: InstaZapOptions
 ): Promise<StructuredMessage> => {
   try {
     const response = await axios
-      .get(`https://www.instagram.com/api/v1/direct_v2/threads/${ message.thread_id }/get_items/?item_ids=%5B%22${ message.item_id }%22%5D&original_message_client_contexts=%5B%22${ (message as any).client_context }%22%5D`, {
+      .get(`https://www.instagram.com/api/v1/direct_v2/threads/${ message.thread_id }/get_items/?item_ids=%5B%22${ message.item_id }%22%5D&original_message_client_contexts=%5B%22${ message.client_context }%22%5D`, {
       headers: await getInstagramHeaders(ig),
       method: 'GET'
     })
@@ -279,7 +280,7 @@ export const getStructuredMessage = async (
       }
     } else if ((message as any).placeholder.message === 'Use the latest version of the Instagram app to see this type of message.') {
       try {
-        return await handleMediaShare(ig, message, options)
+        return await handleMediaShare(ig, message as unknown as MEDIA_SHARE_MESSAGE, options)
       } catch(err) {
         console.error(err)
         return {
@@ -290,7 +291,7 @@ export const getStructuredMessage = async (
     }
   }
   if (message.item_type === 'media_share') {
-    return await handleMediaShare(ig, message, options)
+    return await handleMediaShare(ig, message as unknown as MEDIA_SHARE_MESSAGE, options)
   }
   if (message.item_type === 'story_share') {
     return await handleStoryShare(message, options)
@@ -382,12 +383,25 @@ export const attemptReconnection = async (ig: IgApiClientRealtime) => {
   return await connectToRealtime(ig)
 }
 
+export const markAsSeen = async (
+  ig: IgApiClientRealtime,
+  message: MessageSyncMessage,
+) => {
+  try {
+    if (!message.thread_id) throw new Error('No Thread ID for message')
+    await ig.entity.directThread(message.thread_id).markItemSeen(message.item_id)
+  } catch(err) {
+    console.error('⚡ Could not mark message as seen due to this error: ', err)
+  }
+}
+
 export const handleNewMessages = async (
   ig: IgApiClientRealtime,
   slack: App<StringIndexed>,
   message: MessageSyncMessage,
   options: InstaZapOptions
 ) => {
+  await markAsSeen(ig, message)
   const structuredMessage = await getStructuredMessage(ig, message, options)
   if (structuredMessage.type === MESSAGE_TYPE.UNKNOWN) return
   if (structuredMessage.type === MESSAGE_TYPE.ERROR) {

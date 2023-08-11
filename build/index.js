@@ -8,18 +8,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // Packages:
 require("dotenv/config");
 const instagram_private_api_1 = require("instagram-private-api");
 const instagram_mqtt_1 = require("instagram_mqtt");
 const bolt_1 = require("@slack/bolt");
+const testing_1 = __importDefault(require("./testing"));
 const utils_1 = require("./utils");
 // Functions:
 const InstaZap = (options) => __awaiter(void 0, void 0, void 0, function* () {
     const ig = (0, instagram_mqtt_1.withRealtime)(new instagram_private_api_1.IgApiClient());
     ig.state.generateDevice(options.instagram.credentials.USERNAME);
-    const slack = new bolt_1.App({
+    const slack = options.slack.mock ? (0, testing_1.default)() : new bolt_1.App({
         token: options.slack.credentials.OAUTH_TOKEN,
         signingSecret: options.slack.credentials.SIGNING_SECRET
     });
@@ -34,6 +38,7 @@ const InstaZap = (options) => __awaiter(void 0, void 0, void 0, function* () {
     }
     console.log('⚡ Ready');
     ig.realtime.on('message', ({ message }) => __awaiter(void 0, void 0, void 0, function* () { return yield (0, utils_1.handleNewMessages)(ig, slack, message, options); }));
+    // ig.realtime.on('message', async ({ message }) => console.log((message['media_share'] as any)['carousel_media']))
     ig.realtime.on('error', console.error);
     ig.realtime.on('close', () => __awaiter(void 0, void 0, void 0, function* () {
         console.error('⚡ Instagram RealtimeClient closed');

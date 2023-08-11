@@ -65,6 +65,7 @@ export interface InstaZapOptions {
       OAUTH_TOKEN: string
       SIGNING_SECRET: string
     }
+    mock?: boolean
   }
   getAllItemsFromCarousel?: boolean
   ignoreAspectRatio?: boolean
